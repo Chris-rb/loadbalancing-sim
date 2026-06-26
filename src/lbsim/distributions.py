@@ -9,7 +9,7 @@ class Distributions:
         self.service_rate = service_rate
         
     def interarrival(self) -> float:
-        self.rng.exponential(scale=(1/self.arrival_rate))
+        return self.rng.exponential(scale=(1/self.arrival_rate))
     
     def service(self) -> float:
-        self.rng.exponential(scale=(1/self.service_rate))
+        return self.rng.exponential(scale=(1/self.service_rate))
