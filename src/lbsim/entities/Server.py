@@ -19,6 +19,11 @@ class Server:
     state: ServerState = ServerState.IDLE
     current_req: Optional[Request] = None
     
+    def __init__(self, id, queue_cap):
+        self.id = id
+        self.queue_cap = queue_cap
+        self.queue = deque(maxlen=self.queue_cap)
+    
     def queue_len(self) -> int:
         return len(self.queue)
     
@@ -37,17 +42,18 @@ class Server:
         self.queue.append(request)
         return True
         
-    
     def finish_current(self) -> Request:
+        if self.current_req is None:
+            raise Exception("No request currently active")
         
+        finished_req = self.current_req
         if self.queue_len() > 0:
-            finished_req = self.current_req
             self.current_req = self.queue.pop()
+        
+        elif self.queue_len() == 0:
+            self.state = ServerState.IDLE
+            self.current_req = None
             
-            if self.queue_len() == 0:
-                self.state = ServerState.IDLE
-                self.current_req = None
-                
-            return finished_req
+        return finished_req
                 
             
