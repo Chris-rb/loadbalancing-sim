@@ -22,7 +22,7 @@ class Simulator:
         )
         self.servers = [Server(id=i, queue_cap=config.k) for i in range(config.c)]
         self.balancer = make_policy(config.policy, self.servers)
-        self.stats = StatsCollector(warmup=config.warmup)
+        self.stats = StatsCollector(policy=config.policy, warmup=config.warmup)
         
     def schedule(self, event: Event) -> None:
         heapq.heappush(self._events, event)
@@ -71,9 +71,9 @@ class Simulator:
             self.stats.record_drop()
             
     def _handle_departure(self, event: Event) -> None:
-        finished_req =  event.payload.finish_current()
+        finished_req = event.payload.finish_current()
         finished_req.t_done = self.clock
-        self.stats.record_done()
+        self.stats.record_done(finished_req)
         
         if event.payload.state == ServerState.BUSY:
             self.schedule(Event(self.clock + event.payload.current_req.demand, EventKind.DEPARTURE, event.payload))
