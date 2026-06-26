@@ -1,12 +1,18 @@
 import os
+import sys
 import csv
 from datetime import datetime
 
 from .entities.Request import Request
+from .policies import PolicyTypes
+
+root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__)))
+sys.path.append(root_dir)
 
 class StatsCollector:
     
-    def __init__(self, warmup: int = 0):
+    def __init__(self, policy: str, warmup: int = 0):
+        self.policy = policy
         self.warmup = warmup
         self.finished_count: int = 0
         self.drop_count: int = 0
@@ -36,12 +42,21 @@ class StatsCollector:
         
         return sum(self._response_times[self.warmup:]) / (len(self._response_times) - self.warmup)
     
+    def summary(self) -> None:
+        print(f"Policy: \t\t{self.policy}")
+        print(f"Completed requests: \t{self.finished_count}")
+        print(f"Droped requests: \t{self.drop_count}")
+        print(f"Average service time: \t{self.mean_response_time()}")
+    
     def write_csv(self) -> None:
         now = datetime.now()
         cwd = os.getcwd()
-        reports_dir = os.path.join(cwd, os.pardir, "reports")
         report_csv = f"load_balancing_sim_report_{now.strftime("%Y%m%dT%H%M%S")}.csv"
-        report_path = os.path(reports_dir, report_csv)
+        if self.policy == PolicyTypes.RR.value:
+            report_csv = "RR_" + report_csv
+        else:
+            report_csv = "LC_" + report_csv
+        report_path = os.path.join(cwd, "reports", report_csv)
         
         headers = [
             "id",
@@ -49,6 +64,7 @@ class StatsCollector:
             "completed_time",
             "response_time"
         ]
+        self._records.sort(key=lambda s: s["id"])
         
         try:
             with open(report_path, "w") as report_file:
