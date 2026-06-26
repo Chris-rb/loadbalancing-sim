@@ -1,5 +1,6 @@
 import os
 import sys
+import traceback
 
 from src.lbsim.config import Config
 from src.lbsim.simulator import Simulator
@@ -16,7 +17,8 @@ def main(args: list[str]) -> int:
         stats.write_csv()
         return 0
     except Exception as e:
-        print(f"an unexpected error occured: {e}")
+        print(f"[run_sim] Unexpected error occured: {e}")
+        traceback.print_exc()
     
 if __name__ == "__main__":
     raise SystemExit(main(sys.argv))
