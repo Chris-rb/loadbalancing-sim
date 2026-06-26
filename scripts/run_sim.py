@@ -15,10 +15,11 @@ def main(args: list[str]) -> int:
         sim = Simulator(cfg)
         stats = sim.run()
         stats.write_csv()
-        return 0
+        stats.summary()
+        
     except Exception as e:
         print(f"[run_sim] Unexpected error occured: {e}")
         traceback.print_exc()
     
 if __name__ == "__main__":
-    raise SystemExit(main(sys.argv))
+    main(sys.argv)
