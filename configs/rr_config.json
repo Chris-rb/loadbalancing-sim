@@ -1,0 +1,10 @@
+{
+  "policy": "Round Robin",
+  "c": 10,
+  "K": 50,
+  "rho": 0.9,
+  "seed": 1,
+  "max_requests": 10000,
+  "warmup": 2000,
+  "service_rate": 1.0
+}
