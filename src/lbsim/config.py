@@ -1,5 +1,6 @@
 import json
 from dataclasses import dataclass
+import traceback
 
 
 @dataclass
@@ -24,16 +25,17 @@ class Config:
                 
                 config = Config(
                     policy = config_data["policy"],
-                    c = config_json["c"],
-                    k = config_json["k"],
-                    rho = config_json["rho"],
-                    seed = config_json["seed"],
-                    max_requests = config_json["max_requests"],
-                    warmup = config_json["warmup"],
-                    service_rate = config_json["service_rate"]
+                    c = config_data["c"],
+                    k = config_data["K"],
+                    rho = config_data["rho"],
+                    seed = config_data["seed"],
+                    max_requests = config_data["max_requests"],
+                    warmup = config_data["warmup"],
+                    service_rate = config_data["service_rate"]
                 )
                 
                 return config
                 
         except Exception as e:
-            print(f"Unexpected error occured: {e}")
+            print(f"[config] Unexpected error occured: {e}")
+            traceback.print_exc()
