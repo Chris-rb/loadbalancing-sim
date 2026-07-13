@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Union
+from typing import Optional
 from enum import Enum
 
 from .entities.Request import Request
@@ -15,4 +15,5 @@ class EventKind(Enum):
 class Event:
     time: float
     kind: EventKind
-    payload: Union[Request, Server]
+    server_payload: Optional[Server] = None
+    req_payload: Optional[Request] = None
