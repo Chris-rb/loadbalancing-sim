@@ -33,50 +33,118 @@ source .venv/bin/activate          # Windows: .venv\Scripts\activate
 
 pip install -r requirements.txt
 ```
-
-
-## Run a simulation
-
-Point the runner at a config file:
-
+Run the two halves in separate terminals.
+ 
+**Backend** (FastAPI + WebSocket, served by uvicorn):
+ 
 ```bash
-python -m scripts.run_experiment configs/lc_config.json
+source .venv/bin/activate
+uvicorn lbsim.api.lbsim_server:app --reload --port 8000
 ```
-
-This runs the simulation, prints a one-line summary, and writes a per-request CSV to `results/`. Two configs are provided — identical except for the policy — so you can compare them at the same load:
-
+ 
+The API is now at `http://localhost:8000` and the replay WebSocket at
+`ws://localhost:8000/ws/replay`. `--reload` restarts on code changes.
+ 
+**Frontend** (Vite dev server with hot reload):
+ 
 ```bash
-python -m scripts.run_experiment configs/rr_config.json
-python -m scripts.run_experiment configs/lc_config.json
+cd frontend
+npm install                          # first time only
+npm run dev
 ```
+ 
+The dashboard is at `http://localhost:5173` and talks to the backend on 8000.
 
-At the same load, Least Connections should report a lower mean response time than Round Robin. That is the system working as intended: routing to the shortest queue beats routing blindly.
-
-## Configuration
-
-Each experiment is one JSON file in `configs/`. The arrival rate is not set directly — you set the target load `rho` and the arrival rate is derived from it.
-
-| key            | meaning                                        |
-|----------------|------------------------------------------------|
-| `policy`       | `Round Robin` or `Least Connections`           |
-| `c`            | number of servers                              |
-| `K`            | per-server queue capacity                      |
-| `rho`          | target offered load, between 0 and 1           |
-| `seed`         | random seed (makes a run reproducible)         |
-| `max_requests` | stop after this many requests complete         |
-| `warmup`       | completions discarded before recording stats   |
-| `service_rate` | mean service rate; leave at 1.0                |
-
-To run your own scenario, copy a config, change the values, and point the runner at it. A higher `rho` (closer to 1) makes the cluster busier and the differences between policies sharper.
+# Configuration & What to Expect
+ 
+The simulator is configured through the **Simulator Configuration** panel (web
+UI) or a JSON config file (CLI). Every field below maps to one setting.
+ 
+## Configuration fields
+ 
+| Field | Meaning | Notes |
+|---|---|---|
+| **Policy Type** | Dispatching algorithm | Round Robin, Least Connections, or Power of Two |
+| **Number of Servers** | Servers in the cluster | e.g. 5 or 10 |
+| **Max Queue Length** | Per-server queue capacity | Requests arriving at a full queue are dropped |
+| **Server Load (max 1)** | Target offered load ρ | 0–1; higher = busier. Arrival rate is derived from this, not set directly |
+| **Seed** | Random seed | Same seed = identical, reproducible run |
+| **Number of Requests** | Requests to complete before stopping | The run ends after this many finish |
+| **Warmup Requests** | Completions discarded before recording stats | Excludes the empty-system startup so numbers reflect steady state |
+| **Enable Failures** | Turns the failure model on/off | Off by default |
+| **MTBF** | Mean time between failures | Only shown/used when failures are enabled |
+| **MTTR** | Mean time to repair | Only shown/used when failures are enabled |
+ 
+Note on load: you set **Server Load (ρ)**, and the arrival rate follows from it
+(`λ = ρ × servers × service rate`). Raising ρ toward 1 pushes the cluster toward
+saturation.
+ 
+## The three policies
+ 
+- **Round Robin** — cycles through servers in order, ignoring how busy each is.
+  The simple baseline.
+- **Least Connections** — routes each request to the server with the shortest
+  queue. The strongest of the three.
+- **Power of Two** — samples two random servers and picks the shorter queue.
+  Nearly matches Least Connections while checking far less state.
+## What to expect from a run
+ 
+**The dashboard** shows live metrics (mean/p95/p99 response time, throughput,
+completed and dropped requests), a **server cluster** grid where each tile's
+fill and color reflect its current queue depth (green = healthy, amber =
+building, red = full or failed), and a **response-time chart** over simulated
+time.
+ 
+**Reading the results:**
+ 
+- **Least Connections and Power of Two hold up well under load** — low mean
+  response times and typically zero drops, even near ρ = 0.9.
+- **Round Robin degrades at high load** — because it ignores queue state, some
+  servers build long queues, inflating the p95/p99 tail and producing dropped
+  requests where the other policies drop none.
+- **Tail latency (p95/p99) rises sharply as ρ approaches 1.** Lowering the load
+  noticeably shrinks the tail.
+- **Drops appear when queues overflow** — most common under Round Robin at high
+  load, or when failures remove capacity.
+- **With failures enabled**, a server going down shifts its load onto the
+  survivors; effective load on the remaining servers rises, and you may see a
+  temporary spike in response times and additional drops until it recovers.
+**Reproducibility:** a given (config, seed) pair always produces the same
+result, so runs can be repeated and compared exactly.
 
 ## Output
 
-The per-request CSV in `results/` has one row per completed request:
-
-| column          | meaning                                        |
-|-----------------|------------------------------------------------|
-| `t_arrive`      | clock time the request entered the system      |
-| `t_done`        | clock time its service completed               |
-| `response_time` | `t_done − t_arrive`; total time in the system  |
-
-`response_time` is the headline metric; `t_arrive` and `t_done` are timestamps on the virtual clock (they start partway into the run because the warm-up period is discarded). All values are in simulation time units.
+Every run — whether launched from the web UI or the command line — generates a
+**CSV report**, one file per run, saved to the `reports/` directory. Each row
+corresponds to one completed request, with the summary metrics recomputed
+cumulatively as the run progresses (so the final row reflects the whole run).
+ 
+## Columns
+ 
+| Column | Meaning |
+|---|---|
+| `completed_requests` | Running count of completed requests at this point |
+| `dropped_requests` | Running count of dropped requests (queue full or lost to a failure) |
+| `arrival_time` | Simulation clock time the request arrived |
+| `completed_time` | Time spent in service for this request (its service duration) |
+| `response_time` | Total time in system: waiting + service |
+| `wait_time` | Time spent waiting in queue before service began |
+| `throughput` | Completions per unit of simulated time, cumulative |
+| `p50` | Median response time so far |
+| `p95` | 95th-percentile response time so far |
+| `p99` | 99th-percentile response time so far |
+ 
+Notes:
+ 
+- **Times are in simulation time units** (one unit ≈ one mean service time), not
+  seconds. Results are scale-free.
+- **Warm-up requests are excluded** — the first *N* completions (set by *Warmup
+  Requests*) are discarded, so the earliest rows begin partway into the run and
+  the statistics reflect steady state rather than the empty-system startup.
+- `response_time = wait_time + completed_time` for each request.
+- The percentile and throughput columns are **cumulative** — they update as more
+  requests complete, so the last row gives the run's final p50/p95/p99 and
+  throughput.
+- The same `(config, seed)` always produces the same CSV, so runs are fully
+  reproducible.
+ 
