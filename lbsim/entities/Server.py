@@ -47,10 +47,10 @@ class Server:
             raise Exception("No request currently active")
         
         finished_req = self.current_req
-        if self.queue_len() > 0:
-            self.current_req = self.queue.pop()
+        if self.queue:
+            self.current_req = self.queue.popleft()
         
-        elif self.queue_len() == 0:
+        else:
             self.state = ServerState.IDLE
             self.current_req = None
             

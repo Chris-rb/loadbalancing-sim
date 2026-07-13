@@ -2,8 +2,8 @@ import os
 import sys
 import traceback
 
-from src.lbsim.config import Config
-from src.lbsim.simulator import Simulator
+from lbsim.config import Config
+from lbsim.simulator import Simulator
 
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 sys.path.append(root_dir)

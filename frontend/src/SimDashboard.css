@@ -1,0 +1,126 @@
+.sim-title {
+    color: white;
+    padding: 15px 0 25px 0;
+}
+
+.sim-details-labels {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.policy-title {
+    color: white;
+    padding-right: 15px;
+}
+
+.sim-config-container{
+    margin: 10px;
+}
+
+.sim-control-panel {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.speed-slider {
+    min-width: 50%;
+}
+
+.sim-config-controls {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+}
+
+.MuiButton-root:not(.Mui-disabled) {
+    width: 100px;
+    height: 45px;
+    color: #ffffff;
+    border-radius: 10px;
+    background-color: #0066CC;
+}
+
+.MuiButton-root:not(.Mui-disabled):hover {
+  background-color: #115293 !important; /* Your custom hover color */
+}
+
+.MuiButton-root.Mui-disabled {
+    width: 100px;
+    height: 45px;
+    border-radius: 10px;
+    color: #707478 !important;
+    background-color: #2F3640;
+}
+
+.metrics-label {
+    display: flex;
+    justify-content: left;
+    padding: 35px 0 0 15px;
+    color: white;
+}
+
+.metrics-container-outer{
+    display: flex;
+    flex-direction: row;
+    justify-content: right;
+    gap: 40px;
+    margin: 15px;
+}
+
+.metrics-container {
+    display: grid;
+    place-items: center; 
+    width: 100%;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px
+}
+
+.metrics-box-col {
+    display: flex;
+    flex-direction: column;
+    justify-content: left;
+    width: 100%;
+    min-height: 95px;
+    max-height: 100px;
+    min-width: 100px;
+    max-width: 200px;
+    padding-top: 3px;
+    background-color: rgba(50, 49, 49, 0.159);
+    border: 0.5px solid var(--border);
+    border-radius: 10px;
+}
+
+.inner-box-title {
+    padding-bottom: 7px;
+}
+
+.metrics {
+    color: #ffffff;
+    font-family: "Inter", "IBM Plex Sans", sans-serif;
+}
+
+.server-cluster-label {
+    display: flex;
+    justify-content: left;
+    padding: 35px 0 0 15px;
+    color: white;
+}
+
+.server-cluster-container {
+    padding: 20px 0 35px 0;
+    display: grid;
+    place-items: center; 
+    width: 100%;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px
+}
+
+.line-chart-label {
+    display: flex;
+    justify-content: left;
+    padding: 0 0 0 15px;
+    color: white;
+}
